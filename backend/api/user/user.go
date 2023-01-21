@@ -1,0 +1,5 @@
+package User
+
+func UserRoutes() {
+
+}
