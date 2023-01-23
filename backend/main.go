@@ -72,9 +72,7 @@ func main() {
 
 	for email := range emails {
 		wg2.Add(1)
-		fmt.Println("----------------------------------------------------")
 		go ZincSearchIngestion(email, &wg2)
-		fmt.Println("----------------------------------------------------")
 	}
 
 	wg2.Wait()
@@ -86,15 +84,15 @@ func ProcessLine(buffer *bufio.Scanner, emails chan<- Email, wg *sync.WaitGroup,
 	var date, from, to, xfrom, subject, body string
 	var isfirst bool = true
 	for buffer.Scan() {
-		wg.Add(1)
 		if strings.HasPrefix(buffer.Text(), "Date: ") {
+			wg.Add(1)
 			date = strings.TrimPrefix(buffer.Text(), "Date: ")
 			if !isfirst {
 				email := Email{Date: date, From: from, To: to, XFrom: xfrom, Body: body, Subject: subject}
 				emails <- email
 				body = ""
 				isfirst = true
-
+				wg.Done()
 			}
 		} else if strings.HasPrefix(buffer.Text(), "To: ") {
 			to = FormatText(buffer.Text(), "To: ")
@@ -108,7 +106,6 @@ func ProcessLine(buffer *bufio.Scanner, emails chan<- Email, wg *sync.WaitGroup,
 			body += buffer.Text() + "\n"
 			isfirst = false
 		}
-		wg.Done()
 	}
 	wg.Done()
 	isFinished <- true
