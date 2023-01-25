@@ -19,7 +19,6 @@ type Email struct {
 	To      string `json:"To"`
 	Subject string `json:"Subject"`
 	Body    string `json:"Body"`
-	XFrom   string `json:"X-From"`
 }
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
@@ -81,14 +80,14 @@ func main() {
 }
 
 func ProcessLine(buffer *bufio.Scanner, emails chan<- Email, wg *sync.WaitGroup, isFinished chan<- bool) {
-	var date, from, to, xfrom, subject, body string
+	var date, from, to, subject, body string
 	var isfirst bool = true
 	for buffer.Scan() {
 		if strings.HasPrefix(buffer.Text(), "Date: ") {
 			wg.Add(1)
 			date = strings.TrimPrefix(buffer.Text(), "Date: ")
 			if !isfirst {
-				email := Email{Date: date, From: from, To: to, XFrom: xfrom, Body: body, Subject: subject}
+				email := Email{Date: date, From: from, To: to, Body: body, Subject: subject}
 				emails <- email
 				body = ""
 				isfirst = true
@@ -98,8 +97,6 @@ func ProcessLine(buffer *bufio.Scanner, emails chan<- Email, wg *sync.WaitGroup,
 			to = FormatText(buffer.Text(), "To: ")
 		} else if strings.HasPrefix(buffer.Text(), "From: ") {
 			from = FormatText(buffer.Text(), "From: ")
-		} else if strings.HasPrefix(buffer.Text(), "X-From: ") {
-			xfrom = FormatText(buffer.Text(), "X-From: ")
 		} else if strings.HasPrefix(buffer.Text(), "Subject: ") {
 			subject = FormatText(buffer.Text(), "Subject: ")
 		} else if buffer.Text() != "" {

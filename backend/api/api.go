@@ -6,11 +6,19 @@ import (
 	"flag"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
+
+type Query struct {
+	SearchType string `json:"search_type"`
+	From       int    `json:"from"`
+	MaxResults int    `json:"max_results"`
+	Source     []any  `json:"_source"`
+}
 
 func main() {
 
@@ -30,6 +38,10 @@ type Server struct {
 	Router *chi.Mux
 }
 
+type Data struct {
+	Hits []any `json:"hits"`
+}
+
 func CreateServer() *Server {
 	s := &Server{}
 	s.Router = chi.NewRouter()
@@ -42,42 +54,91 @@ func (s *Server) MountHandlers() {
 	s.Router.Get("/", HelloWorld)
 
 	s.Router.Get("/getmails", GetMails)
+
+	s.Router.Get("/mails/{offset}", getOffsetMails)
 }
 
 func HelloWorld(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello World!"))
 }
 
+func getOffsetMails(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
+
+	offsetParam := chi.URLParam(r, "offset")
+
+	if offsetParam == "" {
+		w.WriteHeader(400)
+		w.Write([]byte("No offset value found"))
+		return
+	}
+
+	integer, integerErr := strconv.Atoi(offsetParam)
+
+	if integerErr != nil {
+		w.WriteHeader(400)
+		w.Write([]byte("Invalid offset value"))
+		return
+	}
+
+	query := Query{
+		SearchType: "matchall",
+		From:       integer,
+		MaxResults: 10,
+		Source:     make([]any, 0),
+	}
+
+	queryjson, marshalErr := json.Marshal(query)
+
+	if marshalErr != nil {
+		w.WriteHeader(500)
+		w.Write([]byte("Internal server error"))
+		return
+	}
+
+	res, err := HttpRequest("http://localhost:4080/api/games3/_search", "POST", string(queryjson))
+
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte("Error doing query"))
+		return
+	}
+
+	w.Write(res)
+}
+
 func GetMails(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json")
 
-	type Hits struct {
-		Date string `json:"Date"`
-	}
-
-	type Data struct {
-		Hits []any `json:"hits"`
-	}
-
 	var mydata Data
 
-	query := `{
-        "search_type": "matchall",
-        "from": 0,
-        "max_results": 10,
-        "_source": []
-    }`
+	query := Query{
+		SearchType: "matchall",
+		From:       0,
+		MaxResults: 10,
+		Source:     make([]any, 0),
+	}
 
-	res, err := HttpRequest("http://localhost:4080/api/games3/_search", "POST", query)
+	queryFormated, errMarshal := json.Marshal(query)
+
+	if errMarshal != nil {
+		w.WriteHeader(500)
+		w.Write([]byte("Error generating query"))
+		return
+	}
+
+	res, err := HttpRequest("http://localhost:4080/api/games3/_search", "POST", string(queryFormated))
 	if err != nil {
-		w.Write([]byte(err.Error()))
+		w.WriteHeader(500)
+		w.Write([]byte("Error doing query"))
+		return
 	}
 
 	json.Unmarshal(res, &mydata)
 
 	w.Write(res)
-
 }
 
 func HttpRequest(url string, method string, data string) ([]byte, error) {
