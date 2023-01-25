@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
 	"io"
@@ -48,11 +49,23 @@ func HelloWorld(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetMails(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
+
+	type Hits struct {
+		Date string `json:"Date"`
+	}
+
+	type Data struct {
+		Hits []any `json:"hits"`
+	}
+
+	var mydata Data
 
 	query := `{
         "search_type": "matchall",
         "from": 0,
-        "max_results": 20,
+        "max_results": 10,
         "_source": []
     }`
 
@@ -60,7 +73,11 @@ func GetMails(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Write([]byte(err.Error()))
 	}
+
+	json.Unmarshal(res, &mydata)
+
 	w.Write(res)
+
 }
 
 func HttpRequest(url string, method string, data string) ([]byte, error) {
@@ -71,7 +88,9 @@ func HttpRequest(url string, method string, data string) ([]byte, error) {
 		return nil, errors.New(err.Error())
 	}
 
-	req.SetBasicAuth("lambda", "051111998")
+	req.SetBasicAuth("lambda", "05111998")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36")
 
 	res, resErr := http.DefaultClient.Do(req)
 

@@ -1,5 +1,0 @@
-package User
-
-func UserRoutes() {
-
-}

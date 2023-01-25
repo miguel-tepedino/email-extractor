@@ -1,4 +1,4 @@
-import type { RouteLocation, RouteRecord } from "vue-router";
+import type { RouteLocation } from "vue-router";
 import authstore from "../stores/auth";
 
 export function validateIfLogged(
@@ -7,9 +7,9 @@ export function validateIfLogged(
   next: Function
 ) {
   const validated = authstore().validated;
-  if (validated && to.name != "about") {
+  if (validated && to.name !== "about") {
     return next("/about");
-  } else if (!validated && to.name != "home") {
+  } else if (!validated && to.name !== "home") {
     return next("/");
   } else {
     return next();

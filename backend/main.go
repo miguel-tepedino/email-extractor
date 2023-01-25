@@ -127,7 +127,7 @@ func ZincSearchIngestion(email Email, wg2 *sync.WaitGroup) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	req.SetBasicAuth("lambda", "051111998")
+	req.SetBasicAuth("lambda", "05111998")
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36")
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { Field, useForm } from "vee-validate";
 import * as yup from "yup";
 import authStore from "../stores/auth";
@@ -9,13 +9,16 @@ const authstore = authStore();
 
 const router = useRouter();
 
+const authError = ref<string | null>(null);
+
 const schema = computed(() => {
   return yup.object({
-    email: yup.string().email("Invalidad email address"),
+    email: yup.string().email("Invalidad email address").required(),
     password: yup
       .string()
       .min(8, "Min 8 characters")
-      .max(16, "Max 16 characters"),
+      .max(16, "Max 16 characters")
+      .required(),
   });
 });
 
@@ -34,8 +37,8 @@ const onSubmit = handleSubmit((values) => {
   try {
     authstore.login(values);
     router.push({ name: "about" });
-  } catch (e) {
-    console.log(e);
+  } catch (e: any) {
+    authError.value = e.message;
   }
 });
 </script>
@@ -56,7 +59,7 @@ const onSubmit = handleSubmit((values) => {
           class="border px-2 py-2 rounded-lg mt-5"
           name="email"
           :class="!!errors.email ? 'border-red-600' : 'border-blue-500'"
-          :validate-on-input="true"
+          validate-on-input
           type="text"
         />
         <div class="text-xs text-red-600" v-if="errors.email">
@@ -66,11 +69,14 @@ const onSubmit = handleSubmit((values) => {
           class="border px-2 py-2 rounded-lg mt-5"
           name="password"
           :class="!!errors.password ? 'border-red-600' : 'border-blue-500'"
-          :validate-on-input="true"
+          validate-on-input
           type="password"
         />
         <div class="text-xs text-red-600" v-if="errors.password">
           {{ errors.password }}
+        </div>
+        <div class="text-xs mt-2 text-red-600" v-if="authError">
+          {{ authError }}
         </div>
         <span
           v-if="errors.email || errors.password"

@@ -3,10 +3,9 @@ import HeaderMain from "@/components/header/HeaderMain.vue";
 </script>
 
 <template>
-  <div class="h-screen w-screen bg-blue-500">
-    <header>
-      <HeaderMain />
-    </header>
+  <div class="bg-blue-500 h-full py-5 flex flex-col">
+    <HeaderMain />
+
     <slot />
     <footer></footer>
   </div>
