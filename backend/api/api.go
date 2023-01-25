@@ -51,15 +51,9 @@ func CreateServer() *Server {
 func (s *Server) MountHandlers() {
 	s.Router.Use(middleware.Logger)
 
-	s.Router.Get("/", HelloWorld)
-
-	s.Router.Get("/getmails", GetMails)
+	s.Router.Get("/getmails", getMails)
 
 	s.Router.Get("/mails/{offset}", getOffsetMails)
-}
-
-func HelloWorld(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello World!"))
 }
 
 func getOffsetMails(w http.ResponseWriter, r *http.Request) {
@@ -108,11 +102,9 @@ func getOffsetMails(w http.ResponseWriter, r *http.Request) {
 	w.Write(res)
 }
 
-func GetMails(w http.ResponseWriter, r *http.Request) {
+func getMails(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json")
-
-	var mydata Data
 
 	query := Query{
 		SearchType: "matchall",
@@ -135,8 +127,6 @@ func GetMails(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Error doing query"))
 		return
 	}
-
-	json.Unmarshal(res, &mydata)
 
 	w.Write(res)
 }
