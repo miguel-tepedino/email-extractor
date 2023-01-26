@@ -2,10 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
+
+@layer base {
+    #app {
+        @apply flex flex-row;
+
     min-height: 100vh;
+    min-width: 100%;
+
+    }
+
+    body {
+        @apply relative;
+    }
 }
 
-#app {
-    height: 100vh;
-}

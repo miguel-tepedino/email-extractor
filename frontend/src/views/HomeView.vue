@@ -47,7 +47,7 @@ const onSubmit = handleSubmit((values) => {
   <main
     class="w-screen h-screen flex flex-row justify-center items-center bg-gradient-to-tr from-cyan-800 to-cyan-400"
   >
-    <div class="flex bg-white p-10 rounded-3xl">
+    <div class="flex bg-white w-11/12 md:w-auto p-10 rounded-3xl">
       <form @submit.prevent="onSubmit" class="flex flex-col">
         <div class="flex flex-row justify-center">
           <h3 class="text-xl">Welcome</h3>

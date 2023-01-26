@@ -14,14 +14,17 @@ import (
 )
 
 type Email struct {
-	Date    string `json:"Date"`
-	From    string `json:"From"`
-	To      string `json:"To"`
-	Subject string `json:"Subject"`
-	Body    string `json:"Body"`
+	Date     string `json:"Date"`
+	From     string `json:"From"`
+	To       string `json:"To"`
+	Subject  string `json:"Subject"`
+	Body     string `json:"Body"`
+	NewEmail bool
 }
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+
+var file = flag.String("file", "", "File to extract")
 
 func main() {
 
@@ -36,13 +39,13 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	myfilepath := os.Args[1:]
+	myfilepath := *file
 
-	if myfilepath == nil {
+	if myfilepath == "" {
 		log.Fatal("Please add file direction")
 	}
 
-	data, err := os.Open(myfilepath[0])
+	data, err := os.Open(myfilepath)
 
 	if err != nil {
 		log.Fatal(err)
@@ -52,15 +55,32 @@ func main() {
 
 	fileScanner := bufio.NewScanner(data)
 
+	fileScanner.Split(bufio.ScanLines)
+
 	emails := make(chan Email)
 
 	isFinished := make(chan bool)
 
 	var wg sync.WaitGroup
 
+	newmail := &Email{
+		From:    "",
+		To:      "",
+		Subject: "",
+		Date:    "",
+		Body:    "",
+	}
+
 	wg.Add(1)
 
-	go ProcessLine(fileScanner, emails, &wg, isFinished)
+	go func() {
+		for fileScanner.Scan() {
+			wg.Add(1)
+			newmail.ProcessLine(fileScanner.Text(), emails, &wg, isFinished)
+			wg.Done()
+		}
+		wg.Done()
+	}()
 
 	go func() {
 		wg.Wait()
@@ -70,7 +90,6 @@ func main() {
 	var wg2 sync.WaitGroup
 
 	for email := range emails {
-		wg2.Add(1)
 		go ZincSearchIngestion(email, &wg2)
 	}
 
@@ -79,33 +98,25 @@ func main() {
 	fmt.Println("Program finished")
 }
 
-func ProcessLine(buffer *bufio.Scanner, emails chan<- Email, wg *sync.WaitGroup, isFinished chan<- bool) {
-	var date, from, to, subject, body string
-	var isfirst bool = true
-	for buffer.Scan() {
-		if strings.HasPrefix(buffer.Text(), "Date: ") {
-			wg.Add(1)
-			date = strings.TrimPrefix(buffer.Text(), "Date: ")
-			if !isfirst {
-				email := Email{Date: date, From: from, To: to, Body: body, Subject: subject}
-				emails <- email
-				body = ""
-				isfirst = true
-				wg.Done()
-			}
-		} else if strings.HasPrefix(buffer.Text(), "To: ") {
-			to = FormatText(buffer.Text(), "To: ")
-		} else if strings.HasPrefix(buffer.Text(), "From: ") {
-			from = FormatText(buffer.Text(), "From: ")
-		} else if strings.HasPrefix(buffer.Text(), "Subject: ") {
-			subject = FormatText(buffer.Text(), "Subject: ")
-		} else if buffer.Text() != "" {
-			body += buffer.Text() + "\n"
-			isfirst = false
+func (mail *Email) ProcessLine(line string, emails chan<- Email, wg *sync.WaitGroup, isFinished chan bool) {
+	if strings.HasPrefix(line, "Date: ") {
+		mail.Date = strings.TrimPrefix(line, "Date: ")
+		if !mail.NewEmail {
+			emails <- *mail
+			mail.Body = ""
+			mail.NewEmail = true
+
 		}
+	} else if strings.HasPrefix(line, "To: ") {
+		mail.To = FormatText(line, "To: ")
+	} else if strings.HasPrefix(line, "From: ") {
+		mail.From = FormatText(line, "From: ")
+	} else if strings.HasPrefix(line, "Subject: ") {
+		mail.Subject = FormatText(line, "Subject: ")
+	} else if line != "" {
+		mail.Body += line
+		mail.NewEmail = false
 	}
-	wg.Done()
-	isFinished <- true
 }
 
 func FormatText(str string, prefix string) string {
@@ -114,25 +125,31 @@ func FormatText(str string, prefix string) string {
 }
 
 func ZincSearchIngestion(email Email, wg2 *sync.WaitGroup) {
+	wg2.Add(1)
 	data, err := json.Marshal(email)
 
 	if err != nil {
 		fmt.Println("Error formating data")
+		return
 	}
 
 	req, err := http.NewRequest("POST", "http://localhost:4080/api/games3/_doc", strings.NewReader(string(data)))
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 	req.SetBasicAuth("lambda", "05111998")
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36")
 
-	resp, err := http.DefaultClient.Do(req)
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
-	defer resp.Body.Close()
+
+	defer res.Body.Close()
+
+	fmt.Println(res.StatusCode)
 	wg2.Done()
-	log.Println(resp.StatusCode)
 }

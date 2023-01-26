@@ -24,6 +24,8 @@ const props = defineProps<{
       <div class="ml-5">{{ props.email.Subject }}</div>
     </div>
 
-    <div class="bg-gray-300 p-2 rounded-lg">{{ props.email.Body }}</div>
+    <div class="bg-gray-300 p-2 rounded-lg break-words">
+      {{ props.email.Body }}
+    </div>
   </div>
 </template>

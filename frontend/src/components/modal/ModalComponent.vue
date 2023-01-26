@@ -16,10 +16,10 @@ const emits = defineEmits<{
 <template>
   <Teleport v-if="props.modelValue" to="body">
     <div
-      class="bg-black/75 backdrop-blur-sm absolute top-0 left-0 bottom-0 right-0 flex flex-row justify-center items-center"
+      class="bg-black/75 backdrop-blur-sm fixed overflow-auto top-0 left-0 h-full w-full flex flex-row justify-center items-center"
     >
       <div
-        class="bg-white overflow-y-auto p-5 flex flex-col gap-8 rounded-lg justify-start items-start max-w-[300px] max-w-screen-lg"
+        class="bg-white overflow-auto p-5 flex flex-col gap-8 rounded-lg h-5/6 w-11/12 md:w-3/4 max-w-screen-lg"
       >
         <slot />
         <button

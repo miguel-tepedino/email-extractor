@@ -77,7 +77,7 @@ func getOffsetMails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := Query{
-		SearchType: "matchall",
+		SearchType: "alldocuments",
 		From:       integer,
 		MaxResults: 10,
 		Source:     make([]any, 0),
@@ -107,7 +107,7 @@ func getMails(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	query := Query{
-		SearchType: "matchall",
+		SearchType: "alldocuments",
 		From:       0,
 		MaxResults: 10,
 		Source:     make([]any, 0),
