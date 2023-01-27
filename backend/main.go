@@ -14,12 +14,11 @@ import (
 )
 
 type Email struct {
-	Date     string `json:"Date"`
-	From     string `json:"From"`
-	To       string `json:"To"`
-	Subject  string `json:"Subject"`
-	Body     string `json:"Body"`
-	NewEmail bool
+	Date    string `json:"Date"`
+	From    string `json:"From"`
+	To      string `json:"To"`
+	Subject string `json:"Subject"`
+	Body    string `json:"Body"`
 }
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
@@ -59,8 +58,6 @@ func main() {
 
 	emails := make(chan Email)
 
-	isFinished := make(chan bool)
-
 	var wg sync.WaitGroup
 
 	newmail := &Email{
@@ -71,12 +68,16 @@ func main() {
 		Body:    "",
 	}
 
+	var isNewDateLine *bool
+
+	*isNewDateLine = true
+
 	wg.Add(1)
 
 	go func() {
 		for fileScanner.Scan() {
 			wg.Add(1)
-			newmail.ProcessLine(fileScanner.Text(), emails, &wg, isFinished)
+			newmail.ProcessLine(fileScanner.Text(), emails, &wg, isNewDateLine)
 			wg.Done()
 		}
 		wg.Done()
@@ -98,14 +99,13 @@ func main() {
 	fmt.Println("Program finished")
 }
 
-func (mail *Email) ProcessLine(line string, emails chan<- Email, wg *sync.WaitGroup, isFinished chan bool) {
+func (mail *Email) ProcessLine(line string, emails chan<- Email, wg *sync.WaitGroup, isNewLine *bool) {
 	if strings.HasPrefix(line, "Date: ") {
 		mail.Date = strings.TrimPrefix(line, "Date: ")
-		if !mail.NewEmail {
+		if !*isNewLine {
 			emails <- *mail
 			mail.Body = ""
-			mail.NewEmail = true
-
+			*isNewLine = true
 		}
 	} else if strings.HasPrefix(line, "To: ") {
 		mail.To = FormatText(line, "To: ")
@@ -115,7 +115,7 @@ func (mail *Email) ProcessLine(line string, emails chan<- Email, wg *sync.WaitGr
 		mail.Subject = FormatText(line, "Subject: ")
 	} else if line != "" {
 		mail.Body += line
-		mail.NewEmail = false
+		*isNewLine = false
 	}
 }
 
