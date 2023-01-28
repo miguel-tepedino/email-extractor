@@ -3,12 +3,15 @@ import authstore from "../../stores/auth";
 import { useRouter } from "vue-router";
 import { Field } from "vee-validate";
 import mailsStore from "@/stores/mails";
+import { storeToRefs } from "pinia";
 
 const router = useRouter();
 
 const authst = authstore();
 
 const store = mailsStore();
+
+const { returnMails } = storeToRefs(store);
 
 function logout() {
   authst.logout();
@@ -27,6 +30,7 @@ function handleChange(e: any) {
     <div>Enron mails</div>
     <div class="flex flex-row gap-4">
       <Field
+        class="rounded-full px-3 outline-none border-[3px] focus:border-cyan-500"
         name="search"
         @input.prevent="handleChange"
         type="text"

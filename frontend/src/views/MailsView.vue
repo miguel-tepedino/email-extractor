@@ -30,7 +30,7 @@ function pagination(r: MoreLess) {
 
 <template>
   <main class="mt-16">
-    <div v-if="mailError">Error</div>
+    <div v-if="mailError">{{ mailError }}</div>
     <div v-else class="px-5 flex flex-col">
       <div class="max-w-full overflow-auto">
         <table
@@ -60,8 +60,11 @@ function pagination(r: MoreLess) {
             </tr>
           </tbody>
         </table>
+        <div class="text-center bg-white py-2 mt-5" v-if="mails?.length === 0">
+          <span class="text-2xl">No emails to show</span>
+        </div>
       </div>
-      <div class="mt-2 flex flex-row gap-5 self-end">
+      <div v-if="mails?.length !== 0" class="mt-2 flex flex-row gap-5 self-end">
         <button @click="pagination('LESS')" v-if="offset > 0" type="button">
           &lt; Back
         </button>

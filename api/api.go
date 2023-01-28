@@ -36,7 +36,7 @@ func main() {
 
 	flag.Parse()
 
-	er := godotenv.Load(".env")
+	er := godotenv.Load("../.env")
 
 	if er != nil {
 		log.Panic("env not found")
@@ -68,7 +68,7 @@ func CreateServer() *Server {
 func (s *Server) MountHandlers() {
 	myCors := cors.New(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
-		AllowCredentials: true,
+		AllowCredentials: false,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 	})

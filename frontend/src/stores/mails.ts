@@ -4,7 +4,7 @@ import type { EmailResponse, MailsHits, MoreLess } from "./types";
 import { httpRequest } from "@/http/axios";
 
 export default defineStore("mailsStore", () => {
-  const mails = ref<MailsHits[]>();
+  const mails = ref<MailsHits[]>([]);
 
   const mailError = ref<unknown>(null);
 
@@ -20,11 +20,13 @@ export default defineStore("mailsStore", () => {
     isFetchingMails.value = true;
     try {
       const response = await httpRequest<EmailResponse>({
-        url: "http://localhost:3000/getmails",
+        url: "/getmails",
         method: "GET",
         data: undefined,
       });
-      mails.value = response.data.hits.hits;
+      if (!(response.data as any).error) {
+        mails.value = response.data.hits.hits;
+      }
     } catch (e) {
       mailError.value = e;
     }
@@ -35,11 +37,13 @@ export default defineStore("mailsStore", () => {
     type == "LESS" ? (offset.value -= 10) : (offset.value += 10);
     try {
       const response = await httpRequest<EmailResponse>({
-        url: `http://localhost:3000/mails/${offset.value}`,
+        url: `/mails/${offset.value}`,
         data: undefined,
         method: "GET",
       });
-      mails.value = response.data.hits.hits;
+      if (!(response.data as any).error) {
+        mails.value = response.data.hits.hits;
+      }
     } catch (e) {
       mailError.value = e;
     }
@@ -49,13 +53,15 @@ export default defineStore("mailsStore", () => {
     try {
       console.log(search);
       const response = await httpRequest<EmailResponse>({
-        url: "http://localhost:3000/search",
+        url: "/search",
         method: "POST",
         data: {
           term: search,
         },
       });
-      mails.value = response.data.hits.hits;
+      if (!(response.data as any).error) {
+        mails.value = response.data.hits.hits;
+      }
     } catch (e) {
       mailError.value = e;
     }

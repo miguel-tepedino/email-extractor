@@ -10,6 +10,8 @@ import (
 	"os"
 	"runtime/pprof"
 	"strings"
+
+	"github.com/joho/godotenv"
 )
 
 type Email struct {
@@ -42,6 +44,8 @@ func main() {
 	if myfilepath == "" {
 		log.Fatal("Please add file direction")
 	}
+
+	godotenv.Load("../.env")
 
 	data, err := os.Open(myfilepath)
 
@@ -121,7 +125,7 @@ func ZincSearchIngestion(email Email) {
 		fmt.Println(err)
 		return
 	}
-	req.SetBasicAuth("lambda", "05111998")
+	req.SetBasicAuth(os.Getenv("ZINCSEARCH_USERNAME"), os.Getenv("ZINCSEARCH_PASS"))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36")
 
@@ -131,4 +135,6 @@ func ZincSearchIngestion(email Email) {
 		return
 	}
 	defer res.Body.Close()
+
+	fmt.Println(res.Status)
 }
