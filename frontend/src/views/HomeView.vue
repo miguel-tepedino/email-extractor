@@ -36,7 +36,7 @@ const { errors, handleSubmit } = useForm<{
 const onSubmit = handleSubmit((values) => {
   try {
     authstore.login(values);
-    router.push({ name: "about" });
+    router.push("/mails");
   } catch (e: any) {
     authError.value = e.message;
   }

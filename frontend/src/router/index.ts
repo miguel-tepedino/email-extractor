@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "../views/HomeView.vue";
 import { validateIfLogged } from "./guards";
+import NotFoundView from "../views/NotFoundView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -12,8 +13,8 @@ const router = createRouter({
       beforeEnter: validateIfLogged,
     },
     {
-      path: "/about",
-      name: "about",
+      path: "/mails",
+      name: "mails",
       meta: {
         layout: "MainLayout",
       },
@@ -23,6 +24,7 @@ const router = createRouter({
       component: () => import("../views/MailsView.vue"),
       beforeEnter: validateIfLogged,
     },
+    { path: '/:pathMatch(.*)*', name: 'NotFound', component: NotFoundView },
   ],
 });
 

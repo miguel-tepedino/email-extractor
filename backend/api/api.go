@@ -91,7 +91,7 @@ func getOffsetMails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := HttpRequest("http://localhost:4080/api/games3/_search", "POST", string(queryjson))
+	res, err := HttpRequest("http://localhost:4080/api/enron/_search", "POST", string(queryjson))
 
 	if err != nil {
 		w.WriteHeader(500)
@@ -121,7 +121,7 @@ func getMails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := HttpRequest("http://localhost:4080/api/games3/_search", "POST", string(queryFormated))
+	res, err := HttpRequest("http://localhost:4080/api/enron/_search", "POST", string(queryFormated))
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte("Error doing query"))

@@ -18,58 +18,8 @@ export default defineStore("mailsStore", () => {
     return mails.value;
   });
 
-  async function getMails() {
-    isFetchingMails.value = true;
-    const { data, error } = await useFetch<EmailResponse>(
-      "http://localhost:3000/getmails"
-    ).json<EmailResponse>();
-
-    if (error.value) {
-      mailError.value = error.value;
-      return;
-    }
-
-    mails.value = data.value?.hits.hits;
-    isFetchingMails.value = false;
-  }
-
-  async function getOffsetEmails() {
-    isFetchingMore.value = true;
-    offset.value += 10;
-    const { data, error } = await useFetch<EmailResponse>(
-      `http://localhost:3000/mails/${offset.value}`
-    ).json<EmailResponse>();
-    if (error.value) {
-      mailError.value = error.value;
-      return;
-    }
-
-    mails.value = data.value?.hits.hits;
-    isFetchingMails.value = false;
-  }
-
-  async function backOffsetEmails() {
-    isFetchingMore.value = true;
-    offset.value -= 10;
-    const { data, error } = await useFetch<EmailResponse>(
-      `http://localhost:3000/mails/${offset.value}`
-    ).json<EmailResponse>();
-    if (error.value) {
-      mailError.value = error.value;
-      return;
-    }
-
-    mails.value = data.value?.hits.hits;
-    isFetchingMails.value = false;
-  }
 
   return {
-    returnMails,
-    getMails,
-    isFetchingMails,
-    mailError,
-    getOffsetEmails,
-    backOffsetEmails,
-    offset,
+
   };
 });

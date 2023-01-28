@@ -10,7 +10,6 @@ import (
 	"os"
 	"runtime/pprof"
 	"strings"
-	"sync"
 )
 
 type Email struct {
@@ -58,8 +57,6 @@ func main() {
 
 	emails := make(chan Email)
 
-	var wg sync.WaitGroup
-
 	newmail := &Email{
 		From:    "",
 		To:      "",
@@ -68,38 +65,25 @@ func main() {
 		Body:    "",
 	}
 
-	var isNewDateLine *bool
+	isNewDateLine := new(bool)
 
 	*isNewDateLine = true
 
-	wg.Add(1)
-
 	go func() {
 		for fileScanner.Scan() {
-			wg.Add(1)
-			newmail.ProcessLine(fileScanner.Text(), emails, &wg, isNewDateLine)
-			wg.Done()
+			newmail.ProcessLine(fileScanner.Text(), emails, isNewDateLine)
 		}
-		wg.Done()
-	}()
-
-	go func() {
-		wg.Wait()
 		close(emails)
 	}()
 
-	var wg2 sync.WaitGroup
-
 	for email := range emails {
-		go ZincSearchIngestion(email, &wg2)
+		go ZincSearchIngestion(email)
 	}
-
-	wg2.Wait()
 
 	fmt.Println("Program finished")
 }
 
-func (mail *Email) ProcessLine(line string, emails chan<- Email, wg *sync.WaitGroup, isNewLine *bool) {
+func (mail *Email) ProcessLine(line string, emails chan<- Email, isNewLine *bool) {
 	if strings.HasPrefix(line, "Date: ") {
 		mail.Date = strings.TrimPrefix(line, "Date: ")
 		if !*isNewLine {
@@ -124,8 +108,7 @@ func FormatText(str string, prefix string) string {
 	return line
 }
 
-func ZincSearchIngestion(email Email, wg2 *sync.WaitGroup) {
-	wg2.Add(1)
+func ZincSearchIngestion(email Email) {
 	data, err := json.Marshal(email)
 
 	if err != nil {
@@ -133,7 +116,7 @@ func ZincSearchIngestion(email Email, wg2 *sync.WaitGroup) {
 		return
 	}
 
-	req, err := http.NewRequest("POST", "http://localhost:4080/api/games3/_doc", strings.NewReader(string(data)))
+	req, err := http.NewRequest("POST", "http://localhost:4080/api/enron/_doc", strings.NewReader(string(data)))
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -142,14 +125,10 @@ func ZincSearchIngestion(email Email, wg2 *sync.WaitGroup) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36")
 
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		fmt.Println(err)
+	res, errDo := http.DefaultClient.Do(req)
+	if errDo != nil {
+		fmt.Println(errDo)
 		return
 	}
-
 	defer res.Body.Close()
-
-	fmt.Println(res.StatusCode)
-	wg2.Done()
 }
