@@ -6,12 +6,15 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 )
 
@@ -32,6 +35,12 @@ func main() {
 	var port *string = flag.String("port", "3000", "Set a different port")
 
 	flag.Parse()
+
+	er := godotenv.Load(".env")
+
+	if er != nil {
+		log.Panic("env not found")
+	}
 
 	s := CreateServer()
 
@@ -208,7 +217,7 @@ func HttpRequest(url string, method string, data string) ([]byte, error) {
 		return nil, errors.New(err.Error())
 	}
 
-	req.SetBasicAuth("lambda", "05111998")
+	req.SetBasicAuth(os.Getenv("ZINCSEARCH_USERNAME"), os.Getenv("ZINCSEARCH_PASS"))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36")
 
