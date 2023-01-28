@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/rs/cors"
 )
 
 type Query struct {
@@ -23,7 +24,7 @@ type Query struct {
 }
 
 type Search struct {
-	Word string `json:"term"`
+	Term string `json:"term"`
 }
 
 func main() {
@@ -33,6 +34,7 @@ func main() {
 	flag.Parse()
 
 	s := CreateServer()
+
 	s.MountHandlers()
 
 	println("Starting server in port: " + *port)
@@ -55,17 +57,35 @@ func CreateServer() *Server {
 }
 
 func (s *Server) MountHandlers() {
+	myCors := cors.New(cors.Options{
+		AllowedOrigins:   []string{"https://*", "http://*"},
+		AllowCredentials: true,
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+	})
+
 	s.Router.Use(middleware.Logger)
+
+	s.Router.Use(myCors.Handler)
 
 	s.Router.Get("/getmails", getMails)
 
 	s.Router.Get("/mails/{offset}", getOffsetMails)
 
-	s.Router.Get("/search", wordSearch)
+	s.Router.Post("/search", wordSearch)
+
+	s.Router.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(404)
+		w.Write([]byte("route does not exist"))
+	})
+	s.Router.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(405)
+		w.Write([]byte("method is not valid"))
+	})
+
 }
 
 func getOffsetMails(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json")
 
 	offsetParam := chi.URLParam(r, "offset")
@@ -111,14 +131,19 @@ func getOffsetMails(w http.ResponseWriter, r *http.Request) {
 }
 
 func wordSearch(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Content-Type", "application/json")
 
-	var word *Search
+	word := new(Search)
 
-	json.NewDecoder(r.Body).Decode(word)
+	errL := json.NewDecoder(r.Body).Decode(word)
 
-	fmt.Println(word)
+	if errL != nil {
+		fmt.Println(errL)
+		w.WriteHeader(500)
+		w.Write([]byte(errL.Error()))
+		return
+	}
+
+	fmt.Println(word.Term)
 
 	query := Query{
 		SearchType: "match",
@@ -148,7 +173,6 @@ func wordSearch(w http.ResponseWriter, r *http.Request) {
 }
 
 func getMails(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json")
 
 	query := Query{

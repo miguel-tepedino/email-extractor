@@ -10,8 +10,6 @@ export default defineStore("mailsStore", () => {
 
   const isFetchingMails = ref<boolean>(false);
 
-  const isFetchingMore = ref<boolean>(false);
-
   const offset = ref<number>(0);
 
   const returnMails = computed(() => {
@@ -22,7 +20,7 @@ export default defineStore("mailsStore", () => {
     isFetchingMails.value = true;
     try {
       const response = await httpRequest<EmailResponse>({
-        url: "/getmails",
+        url: "http://localhost:3000/getmails",
         method: "GET",
         data: undefined,
       });
@@ -37,7 +35,7 @@ export default defineStore("mailsStore", () => {
     type == "LESS" ? (offset.value -= 10) : (offset.value += 10);
     try {
       const response = await httpRequest<EmailResponse>({
-        url: `/mails/${offset.value}`,
+        url: `http://localhost:3000/mails/${offset.value}`,
         data: undefined,
         method: "GET",
       });
@@ -49,9 +47,10 @@ export default defineStore("mailsStore", () => {
 
   async function searchEmail(search: string) {
     try {
+      console.log(search);
       const response = await httpRequest<EmailResponse>({
-        url: "/search",
-        method: "GET",
+        url: "http://localhost:3000/search",
+        method: "POST",
         data: {
           term: search,
         },
