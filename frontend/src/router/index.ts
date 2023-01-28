@@ -24,7 +24,7 @@ const router = createRouter({
       component: () => import("../views/MailsView.vue"),
       beforeEnter: validateIfLogged,
     },
-    { path: '/:pathMatch(.*)*', name: 'NotFound', component: NotFoundView },
+    { path: "/:pathMatch(.*)*", name: "NotFound", component: NotFoundView },
   ],
 });
 

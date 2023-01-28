@@ -3,7 +3,7 @@ import type { Email } from "@/components/emails/type";
 export type EmailResponse = {
   hits: Hits;
   timed_out: boolean;
-  took: 12;
+  took: number;
 };
 
 export type Hits = {
@@ -18,3 +18,5 @@ export type MailsHits = {
   _index: string;
   _source: Email;
 };
+
+export type MoreLess = "MORE" | "LESS";

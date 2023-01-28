@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"flag"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -18,6 +19,11 @@ type Query struct {
 	From       int    `json:"from"`
 	MaxResults int    `json:"max_results"`
 	Source     []any  `json:"_source"`
+	Search     any    `json:"query"`
+}
+
+type Search struct {
+	Word string `json:"term"`
 }
 
 func main() {
@@ -54,6 +60,8 @@ func (s *Server) MountHandlers() {
 	s.Router.Get("/getmails", getMails)
 
 	s.Router.Get("/mails/{offset}", getOffsetMails)
+
+	s.Router.Get("/search", wordSearch)
 }
 
 func getOffsetMails(w http.ResponseWriter, r *http.Request) {
@@ -92,6 +100,43 @@ func getOffsetMails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res, err := HttpRequest("http://localhost:4080/api/enron/_search", "POST", string(queryjson))
+
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte("Error doing query"))
+		return
+	}
+
+	w.Write(res)
+}
+
+func wordSearch(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
+
+	var word *Search
+
+	json.NewDecoder(r.Body).Decode(word)
+
+	fmt.Println(word)
+
+	query := Query{
+		SearchType: "match",
+		From:       0,
+		MaxResults: 10,
+		Source:     make([]any, 0),
+		Search:     word,
+	}
+
+	queryformated, errMarshal := json.Marshal(query)
+
+	if errMarshal != nil {
+		w.WriteHeader(500)
+		w.Write([]byte("Error generating query"))
+		return
+	}
+
+	res, err := HttpRequest("http://localhost:4080/api/enron/_search", "POST", string(queryformated))
 
 	if err != nil {
 		w.WriteHeader(500)
