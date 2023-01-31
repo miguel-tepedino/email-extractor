@@ -3,7 +3,6 @@ import authstore from "../../stores/auth";
 import { useRouter } from "vue-router";
 import { Field } from "vee-validate";
 import mailsStore from "@/stores/mails";
-import { storeToRefs } from "pinia";
 
 const router = useRouter();
 
@@ -11,21 +10,19 @@ const authst = authstore();
 
 const store = mailsStore();
 
-const { returnMails } = storeToRefs(store);
-
 function logout() {
   authst.logout();
   router.push("/");
 }
 
 function handleChange(e: any) {
-  store.searchEmail(e.target.value);
+  store.setSearchWord(e.target.value);
 }
 </script>
 
 <template>
   <header
-    class="fixed flex flex-row justify-between top-0 left-0 right-0 px-10 py-4 bg-white"
+    class="fixed flex flex-row justify-between top-0 left-0 right-0 px-10 py-4 bg-white shadow-xl"
   >
     <div>Enron mails</div>
     <div class="flex flex-row gap-4">

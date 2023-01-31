@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import type { EmailResponse, MailsHits, MoreLess } from "./types";
 import { httpRequest } from "@/http/axios";
 
@@ -12,9 +12,21 @@ export default defineStore("mailsStore", () => {
 
   const offset = ref<number>(0);
 
+  const searchword = ref<string>("");
+
   const returnMails = computed(() => {
     return mails.value;
   });
+
+  watch(mails, () => {
+    console.log(mails.value);
+  });
+
+  function setSearchWord(word: string) {
+    offset.value = 0;
+    searchword.value = word;
+    searchEmail();
+  }
 
   async function getMails() {
     isFetchingMails.value = true;
@@ -35,6 +47,10 @@ export default defineStore("mailsStore", () => {
 
   async function loadMoreLess(type: MoreLess) {
     type == "LESS" ? (offset.value -= 10) : (offset.value += 10);
+    if (searchword.value.length > 0) {
+      searchEmail();
+      return;
+    }
     try {
       const response = await httpRequest<EmailResponse>({
         url: `/mails/${offset.value}`,
@@ -49,17 +65,22 @@ export default defineStore("mailsStore", () => {
     }
   }
 
-  async function searchEmail(search: string) {
+  async function searchEmail() {
+    if (searchword.value.length == 0) {
+      getMails();
+      return;
+    }
     try {
-      console.log(search);
       const response = await httpRequest<EmailResponse>({
         url: "/search",
         method: "POST",
         data: {
-          term: search,
+          term: searchword.value,
+          offset: offset.value,
         },
       });
-      if (!(response.data as any).error) {
+
+      if (response.data) {
         mails.value = response.data.hits.hits;
       }
     } catch (e) {
@@ -75,5 +96,7 @@ export default defineStore("mailsStore", () => {
     loadMoreLess,
     returnMails,
     searchEmail,
+    setSearchWord,
+    mails,
   };
 });

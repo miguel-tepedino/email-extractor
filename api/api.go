@@ -27,7 +27,8 @@ type Query struct {
 }
 
 type Search struct {
-	Term string `json:"term"`
+	Term   string `json:"term"`
+	Offset uint   `json:"offset"`
 }
 
 func main() {
@@ -152,11 +153,9 @@ func wordSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(word.Term)
-
 	query := Query{
 		SearchType: "match",
-		From:       0,
+		From:       int(word.Offset),
 		MaxResults: 10,
 		Source:     make([]any, 0),
 		Search:     word,
@@ -177,6 +176,8 @@ func wordSearch(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Error doing query"))
 		return
 	}
+
+	fmt.Println(string(res))
 
 	w.Write(res)
 }
