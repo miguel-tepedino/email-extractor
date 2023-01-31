@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"net/mail"
 	"os"
 	"runtime/pprof"
 	"strings"
@@ -22,16 +24,28 @@ type Email struct {
 	Body    string `json:"Body"`
 }
 
-var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+var cpuprofileArg = flag.String("cpuprofile", "", "write cpu profile to file")
 
-var file = flag.String("file", "", "File to extract")
+var fileArg = flag.String("file", "", "File to extract")
 
 func main() {
 
+	isNewDateLine := new(bool)
+
+	*isNewDateLine = true
+
+	emails := make(chan string)
+
+	emailsParsed := make(chan Email)
+
+	mailLines := new(string)
+
+	*mailLines = ""
+
 	flag.Parse()
 
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
+	if *cpuprofileArg != "" {
+		f, err := os.Create(*cpuprofileArg)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -39,15 +53,15 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	myfilepath := *file
-
-	if myfilepath == "" {
+	if *fileArg == "" {
 		log.Fatal("Please add file direction")
 	}
 
 	godotenv.Load("../.env")
 
-	data, err := os.Open(myfilepath)
+	fmt.Println(os.Getenv("ZINCSEARCH_PASS"))
+
+	data, err := os.Open(*fileArg)
 
 	if err != nil {
 		log.Fatal(err)
@@ -57,52 +71,37 @@ func main() {
 
 	fileScanner := bufio.NewScanner(data)
 
-	fileScanner.Split(bufio.ScanLines)
-
-	emails := make(chan Email)
-
-	newmail := &Email{
-		From:    "",
-		To:      "",
-		Subject: "",
-		Date:    "",
-		Body:    "",
-	}
-
-	isNewDateLine := new(bool)
-
-	*isNewDateLine = true
-
 	go func() {
 		for fileScanner.Scan() {
-			newmail.ProcessLine(fileScanner.Text(), emails, isNewDateLine)
+			ProcessLine(fileScanner.Text(), emails, isNewDateLine, mailLines)
 		}
 		close(emails)
 	}()
 
-	for email := range emails {
-		go ZincSearchIngestion(email)
+	go func() {
+		for email := range emails {
+			go ParseEmail(email, emailsParsed)
+		}
+		close(emailsParsed)
+	}()
+
+	for emailparsed := range emailsParsed {
+		go ZincSearchIngestion(emailparsed)
 	}
 
 	fmt.Println("Program finished")
 }
 
-func (mail *Email) ProcessLine(line string, emails chan<- Email, isNewLine *bool) {
-	if strings.HasPrefix(line, "Date: ") {
-		mail.Date = strings.TrimPrefix(line, "Date: ")
+func ProcessLine(line string, emails chan<- string, isNewLine *bool, mailLines *string) {
+	if strings.Contains(line, "Message-ID:") {
 		if !*isNewLine {
-			emails <- *mail
-			mail.Body = ""
+			emails <- *mailLines
+			*mailLines = ""
 			*isNewLine = true
 		}
-	} else if strings.HasPrefix(line, "To: ") {
-		mail.To = FormatText(line, "To: ")
-	} else if strings.HasPrefix(line, "From: ") {
-		mail.From = FormatText(line, "From: ")
-	} else if strings.HasPrefix(line, "Subject: ") {
-		mail.Subject = FormatText(line, "Subject: ")
-	} else if line != "" {
-		mail.Body += line
+		*mailLines += line + "\n"
+	} else {
+		*mailLines += line + "\n"
 		*isNewLine = false
 	}
 }
@@ -137,4 +136,26 @@ func ZincSearchIngestion(email Email) {
 	defer res.Body.Close()
 
 	fmt.Println(res.Status)
+}
+
+func ParseEmail(email string, emailParsed chan<- Email) {
+	msg, err := mail.ReadMessage(strings.NewReader(email))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	body, readingErr := io.ReadAll(msg.Body)
+	if readingErr != nil {
+		fmt.Println(readingErr)
+		return
+	}
+
+	emailParsed <- Email{
+		Date:    msg.Header.Get("Date"),
+		From:    msg.Header.Get("From"),
+		To:      msg.Header.Get("To"),
+		Subject: msg.Header.Get("Subject"),
+		Body:    string(body),
+	}
 }

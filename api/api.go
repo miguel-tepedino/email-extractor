@@ -32,7 +32,7 @@ type Search struct {
 
 func main() {
 
-	var port *string = flag.String("port", "3000", "Set a different port")
+	var port *string = flag.String("port", "3002", "Set a different port")
 
 	flag.Parse()
 
@@ -100,7 +100,7 @@ func getOffsetMails(w http.ResponseWriter, r *http.Request) {
 	offsetParam := chi.URLParam(r, "offset")
 
 	if offsetParam == "" {
-		w.WriteHeader(400)
+		w.WriteHeader(500)
 		w.Write([]byte("No offset value found"))
 		return
 	}
@@ -108,7 +108,7 @@ func getOffsetMails(w http.ResponseWriter, r *http.Request) {
 	integer, integerErr := strconv.Atoi(offsetParam)
 
 	if integerErr != nil {
-		w.WriteHeader(400)
+		w.WriteHeader(500)
 		w.Write([]byte("Invalid offset value"))
 		return
 	}
