@@ -54,7 +54,7 @@ function pagination(r: MoreLess) {
               v-for="email in mails"
               :key="email._id"
             >
-              <td class="text-center">{{ email._source.Subject }}</td>
+              <td class="text-center py-3 px-2">{{ email._source.Subject }}</td>
               <td class="text-center">{{ email._source.From }}</td>
               <td class="text-center">{{ email._source.To }}</td>
             </tr>

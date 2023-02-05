@@ -1,0 +1,11 @@
+version: "latest"
+services:
+  app:
+    env_file:
+      - app.env
+    build:
+      dockerfile: Dockerfile
+      context: .
+
+    volumes:
+      - .:/opt/app/api

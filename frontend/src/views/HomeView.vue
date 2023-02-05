@@ -13,7 +13,10 @@ const authError = ref<string | null>(null);
 
 const schema = computed(() => {
   return yup.object({
-    email: yup.string().email("Invalidad email address").required(),
+    email: yup
+      .string()
+      .email("Invalidad email address")
+      .required("Password field is required"),
     password: yup
       .string()
       .min(8, "Min 8 characters")
