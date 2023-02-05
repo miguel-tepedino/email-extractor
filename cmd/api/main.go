@@ -59,6 +59,8 @@ func (s *Server) MountHandlers() {
 
 	s.Router.Use(myCors.Handler)
 
+	s.Router.Use(middleware.CleanPath)
+
 	s.Router.Mount("/", routes.UserRoutes())
 
 	s.Router.NotFound(func(w http.ResponseWriter, r *http.Request) {
