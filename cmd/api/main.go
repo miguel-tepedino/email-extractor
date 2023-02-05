@@ -37,7 +37,7 @@ func main() {
 
 	flag.Parse()
 
-	er := godotenv.Load("../.env")
+	er := godotenv.Load("../../.env")
 
 	if er != nil {
 		log.Panic("env not found")
