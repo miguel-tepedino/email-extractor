@@ -19,6 +19,7 @@ const {
   mailError,
   isFetchingMails,
   offset,
+  totalNumberMails,
 } = storeToRefs(store);
 
 store.getMails();
@@ -32,6 +33,7 @@ function pagination(r: MoreLess) {
   <main class="mt-16">
     <div v-if="mailError">{{ mailError }}</div>
     <div v-else class="px-5 flex flex-col">
+      <div class="mb-4">Total mails: {{ totalNumberMails }}</div>
       <div class="max-w-full overflow-auto">
         <table
           v-if="!isFetchingMails"

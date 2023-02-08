@@ -14,12 +14,10 @@ export default defineStore("mailsStore", () => {
 
   const searchword = ref<string>("");
 
+  const totalNumberMails = ref<number>(0);
+
   const returnMails = computed(() => {
     return mails.value;
-  });
-
-  watch(mails, () => {
-    console.log(mails.value);
   });
 
   function setSearchWord(word: string) {
@@ -37,6 +35,7 @@ export default defineStore("mailsStore", () => {
         data: undefined,
       });
       if (!(response.data as any).error) {
+        totalNumberMails.value = response.data.hits.total.value;
         mails.value = response.data.hits.hits;
       }
     } catch (e) {
@@ -97,6 +96,6 @@ export default defineStore("mailsStore", () => {
     returnMails,
     searchEmail,
     setSearchWord,
-    mails,
+    totalNumberMails
   };
 });
