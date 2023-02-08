@@ -1,4 +1,9 @@
 <script lang="ts" setup>
+import { onClickOutside } from "@vueuse/core";
+import { ref } from "vue";
+
+const modal = ref();
+
 const props = withDefaults(
   defineProps<{
     modelValue: boolean;
@@ -11,6 +16,10 @@ const props = withDefaults(
 const emits = defineEmits<{
   (e: "update:modelValue", value: boolean): void;
 }>();
+
+onClickOutside(modal, () => {
+  emits("update:modelValue", false);
+});
 </script>
 
 <template>
@@ -19,6 +28,7 @@ const emits = defineEmits<{
       class="bg-black/75 backdrop-blur-sm fixed overflow-auto top-0 left-0 h-full w-full flex flex-row justify-center items-center"
     >
       <div
+        ref="modal"
         class="bg-white overflow-auto p-5 flex flex-col gap-8 rounded-lg h-5/6 w-11/12 md:w-3/4 max-w-screen-lg"
       >
         <slot />
