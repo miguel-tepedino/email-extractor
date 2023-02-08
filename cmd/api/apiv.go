@@ -30,7 +30,7 @@ func main() {
 
 	println("Starting server in port: " + *port)
 
-	http.ListenAndServe(":"+*port, s.Router)
+	http.ListenAndServe("0.0.0.0:"+*port, s.Router)
 }
 
 type Server struct {

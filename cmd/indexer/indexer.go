@@ -33,6 +33,8 @@ var cpuprofileArg = flag.String("cpuprofile", "", "write cpu profile to file")
 
 var download = flag.Bool("download", false, "Download de enrondataset")
 
+var extract = flag.String("extract", "", "Extract tar from path")
+
 var counter int64 = 0
 
 func main() {
@@ -45,10 +47,13 @@ func main() {
 
 	*mailLines = ""
 
-	var fileArg = os.Args[1]
+	var folderPathArg = os.Args[1]
 
 	flag.Parse()
 
+	godotenv.Load("../../.env")
+
+	//TODO Finish downloader implementation
 	// if *download {
 	// 	fmt.Println("Starting Download")
 	// 	downloader.Downloader()
@@ -63,23 +68,23 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	if fileArg == "" {
-		log.Fatal("Please add file direction")
+	if *extract != "" {
+		folderPathArg = *extract
+		extractTgz(folderPathArg)
+		os.Exit(0)
 	}
 
-	godotenv.Load("../.env")
-
-	file, err := os.Open(fileArg)
-
-	if err != nil {
-		log.Fatal(err)
+	if folderPathArg == "" {
+		log.Fatal("Please add folder direction")
 	}
 
-	defer file.Close()
-
-	filepath.WalkDir(strings.TrimSuffix(file.Name(), ".tgz")+"/maildir", doSomething)
+	initEmailIndexer(folderPathArg)
 
 	fmt.Println(counter)
+}
+
+func initEmailIndexer(foldername string) {
+	filepath.WalkDir(foldername+"/maildir", walkDirFunc)
 }
 
 func createEmails(pathfile string) {
@@ -97,7 +102,9 @@ func createEmails(pathfile string) {
 		fmt.Println(errMail)
 		return
 	}
+
 	counter++
+
 	parseEmailAndSend(msg)
 
 	defer file.Close()
@@ -123,7 +130,9 @@ func parseEmailAndSend(msg *mail.Message) {
 	ZincSearchIngestion(mail)
 }
 
-func doSomething(path string, d fs.DirEntry, err error) error {
+func walkDirFunc(path string, d fs.DirEntry, err error) error {
+
+	fmt.Println(d)
 
 	if err != nil {
 		fmt.Println(err)
@@ -136,7 +145,13 @@ func doSomething(path string, d fs.DirEntry, err error) error {
 	return err
 }
 
-func extractTgz(file *os.File) {
+func extractTgz(path string) {
+	file, errfile := os.Open(path)
+
+	if errfile != nil {
+		log.Panic(errfile)
+	}
+
 	untgzStream, errTgzStream := gzip.NewReader(file)
 
 	if errTgzStream != nil {
@@ -151,6 +166,7 @@ func extractTgz(file *os.File) {
 	for {
 		header, errHeader := tarReader.Next()
 		if errHeader == io.EOF {
+			initEmailIndexer(strings.TrimSuffix(file.Name(), ".tgz"))
 			break
 		}
 
@@ -199,6 +215,10 @@ func ZincSearchIngestion(email Email) {
 		fmt.Println(err)
 		return
 	}
+
+	fmt.Println(os.Getenv("ZINCSEARCH_USERNAME"))
+
+	fmt.Println(os.Getenv("ZINCSEARCH_PASS"))
 
 	req.SetBasicAuth(os.Getenv("ZINCSEARCH_USERNAME"), os.Getenv("ZINCSEARCH_PASS"))
 	req.Header.Set("Content-Type", "application/json")

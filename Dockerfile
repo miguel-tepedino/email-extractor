@@ -1,10 +1,8 @@
-ARG ZINCSEARCH_PASS=12345678
-ARG ZINCSEARCH_USERNAME=lambda
 FROM golang:latest
 WORKDIR /api
-COPY app.env app.env
-COPY ./ .
+COPY .env .env
+COPY . .
 RUN go mod download
-RUN go build ./api
+RUN go build -o cmd/api cmd/api/apiv.go
 EXPOSE 3002
-CMD ["./api/api"]
+CMD ["./cmd/api/apiv"]

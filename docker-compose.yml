@@ -1,11 +1,19 @@
 version: "latest"
 services:
   app:
+    container_name: myapp
     env_file:
-      - app.env
-    build:
-      dockerfile: Dockerfile
-      context: .
+      - .env
+    build: .
 
+  zincsearch:
+    container_name: zincsearch
+    image: public.ecr.aws/zinclabs/zinc:latest
+    ports:
+      - "4080:4080"
+    environment:
+      ZINC_DATA_PATH: "/data"
+      ZINC_FIRST_ADMIN_USER: "admin"
+      ZINC_FIRST_ADMIN_PASSWORD: "admin"
     volumes:
-      - .:/opt/app/api
+      - ./zincsearch/data:/data

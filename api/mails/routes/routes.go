@@ -23,7 +23,13 @@ func UserRoutes() *chi.Mux {
 
 	router.Post("/search", wordSearch)
 
+	router.Get("/", helloWorld)
+
 	return router
+}
+
+func helloWorld(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Hello World"))
 }
 
 func getOffsetMails(w http.ResponseWriter, r *http.Request) {
