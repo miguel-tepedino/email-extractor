@@ -25,7 +25,7 @@ const schema = computed(() => {
   });
 });
 
-const { errors, handleSubmit } = useForm<{
+const { errors, handleSubmit, values } = useForm<{
   email: string;
   password: string;
 }>({
@@ -82,8 +82,12 @@ const onSubmit = handleSubmit((values) => {
           {{ authError }}
         </div>
         <span
-          v-if="errors.email || errors.password"
-          class="mt-5 self-center bg-gray-400 px-3 py-2 rounded-xl"
+          v-if="
+            errors.email ||
+            errors.password ||
+            !Object.values(values).every((val) => !!val)
+          "
+          class="mt-5 self-center bg-gray-400 text-white px-3 py-2 rounded-xl"
         >
           Submit
         </span>
