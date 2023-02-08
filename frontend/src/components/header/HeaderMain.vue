@@ -25,7 +25,9 @@ function handleChange(e: any) {
     class="fixed flex flex-row justify-between top-0 left-0 right-0 px-10 py-4 bg-white shadow-xl"
   >
     <div>Enron mails</div>
-    <div class="flex flex-row gap-4">
+    <div
+      class="flex flex-col px-4 md:items-center md:px-0 md:flex-row md:gap-4"
+    >
       <Field
         class="rounded-full px-3 outline-none border-[3px] focus:border-cyan-500"
         name="search"
